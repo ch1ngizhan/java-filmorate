@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * Film.
@@ -13,6 +13,6 @@ public class Film {
     private Long id;//целочисленный идентификатор
     private String name;//название
     private String description;//описание
-    private Instant releaseDate;//дата релиза
+    private LocalDate releaseDate;//дата релиза
     private Duration duration;//продолжительность фильма
 }
