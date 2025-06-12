@@ -65,7 +65,7 @@ public class UserController {
             log.info("Создан новый пользователь с ID {}: {}", user.getId(), user);
             return user;
         } catch (Exception e) {
-            throw new ValidationException("Некоректный вод данных");
+            throw new ValidationException("Некорректный вод данных");
         }
     }
 
@@ -130,7 +130,7 @@ public class UserController {
             log.error("Ошибка при обновлении пользователя: {}", errorMessage);
             throw new NotFoundException(errorMessage);
         } catch (Exception e) {
-            throw new ValidationException("Некоректный вод данных");
+            throw new ValidationException("Некорректный вод данных");
         }
     }
 

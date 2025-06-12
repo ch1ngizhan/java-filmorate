@@ -44,7 +44,7 @@ public class FilmController {
                 log.error("Ошибка валидации при создании фильма: {}", errorMessage);
                 throw new ValidationException(errorMessage);
             }
-            if (film.getDuration() == null || film.getDuration().isNegative() || film.getDuration().isZero()) {
+            if (film.getDuration() == null || film.getDuration() <= 0) {
                 String errorMessage = "Продолжительность фильма должна быть положительным числом";
                 log.error("Ошибка валидации при создании фильма: {}", errorMessage);
                 throw new ValidationException(errorMessage);
@@ -54,7 +54,7 @@ public class FilmController {
             log.info("Создан новый фильм с ID {}: {}", film.getId(), film);
             return film;
         } catch (Exception e) {
-            throw new ValidationException("Некоректный вод данных");
+            throw new ValidationException("Некорректный вод данных");
         }
     }
 
@@ -84,7 +84,7 @@ public class FilmController {
                     throw new ValidationException(errorMessage);
                 }
 
-                if (newFilm.getDuration() != null && (newFilm.getDuration().isNegative() || newFilm.getDuration().isZero())) {
+                if (newFilm.getDuration() != null && newFilm.getDuration() <= 0) {
                     String errorMessage = "Продолжительность фильма должна быть положительным числом";
                     log.error("Ошибка валидации при обновлении фильма: {}", errorMessage);
                     throw new ValidationException(errorMessage);
@@ -117,7 +117,7 @@ public class FilmController {
             log.error("Ошибка при обновлении фильма: {}", errorMessage);
             throw new NotFoundException(errorMessage);
         } catch (Exception e) {
-            throw new ValidationException("Некоректный вод данных");
+            throw new ValidationException("Некорректный вод данных");
         }
     }
 

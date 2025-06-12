@@ -31,7 +31,7 @@ class FilmControllerTest {
                 .name("")
                 .description("Description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(Duration.ofMinutes(120))
+                .duration(120L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.create(film),
@@ -45,7 +45,7 @@ class FilmControllerTest {
                 .name("Name")
                 .description(longDescription)
                 .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(Duration.ofMinutes(120))
+                .duration(120L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.create(film),
@@ -58,7 +58,7 @@ class FilmControllerTest {
                 .name("Name")
                 .description("Description")
                 .releaseDate(LocalDate.of(1895, 12, 27))
-                .duration(Duration.ofMinutes(120))
+                .duration(120L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.create(film),
@@ -71,7 +71,7 @@ class FilmControllerTest {
                 .name("Name")
                 .description("Description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(Duration.ofMinutes(-120))
+                .duration(-120L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.create(film),
@@ -84,7 +84,7 @@ class FilmControllerTest {
                 .name("Name")
                 .description("Description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(Duration.ofMinutes(0))
+                .duration(0L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.create(film),
@@ -104,7 +104,7 @@ class FilmControllerTest {
                 .name("Name")
                 .description("Description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
-                .duration(Duration.ofMinutes(120))
+                .duration(120L)
                 .build();
 
         assertThrows(ValidationException.class, () -> filmController.update(film),
