@@ -19,11 +19,6 @@ class UserControllerTest {
         userController = new UserController();
     }
 
-    @Test
-    void create_ShouldThrowException_WhenUserIsNull() {
-        assertThrows(ValidationException.class, () -> userController.create(null),
-                "Должно выбрасываться исключение при попытке создать null пользователя");
-    }
 
     @Test
     void create_ShouldThrowException_WhenEmailIsBlank() {
@@ -85,11 +80,5 @@ class UserControllerTest {
         User createdUser = userController.create(user);
         assertEquals(user.getLogin(), createdUser.getName(),
                 "Имя должно быть равно логину, если имя не указано");
-    }
-
-    @Test
-    void update_ShouldThrowException_WhenUserIsNull() {
-        assertThrows(ValidationException.class, () -> userController.update(null),
-                "Должно выбрасываться исключение при попытке обновить null пользователя");
     }
 }

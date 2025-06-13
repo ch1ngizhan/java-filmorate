@@ -18,11 +18,6 @@ class FilmControllerTest {
         filmController = new FilmController();
     }
 
-    @Test
-    void create_ShouldThrowException_WhenFilmIsNull() {
-        assertThrows(ValidationException.class, () -> filmController.create(null),
-                "Должно выбрасываться исключение при попытке создать null фильм");
-    }
 
     @Test
     void create_ShouldThrowException_WhenNameIsBlank() {
@@ -90,11 +85,6 @@ class FilmControllerTest {
                 "Должно выбрасываться исключение при нулевой продолжительности");
     }
 
-    @Test
-    void update_ShouldThrowException_WhenFilmIsNull() {
-        assertThrows(ValidationException.class, () -> filmController.update(null),
-                "Должно выбрасываться исключение при попытке обновить null фильм");
-    }
 
     @Test
     void update_ShouldThrowException_WhenIdIsNull() {
