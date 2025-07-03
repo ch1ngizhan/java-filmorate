@@ -2,14 +2,10 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -108,6 +104,27 @@ public class InMemoryUserStorage implements UserStorage{
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка при удалении user: {}", errorMessage);
+        throw new NotFoundException(errorMessage);
+    }
+
+    public User getUserById(Long id) {
+        validIdUsers(id); // Проверяем, что пользователь существует
+        return users.get(id);
+    }
+
+    public void validIdUsers (Long id) {
+        log.info("Получен запрос на поиск пользователя по ID: {}",id);
+        if (id == null) {
+            String errorMessage = "ID должен быть указан";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
+        if (users.containsKey(id)){
+            log.debug("Пользователь найден.");
+            return;
+        }
+        String errorMessage = "User с id = " + id + " не найден";
+        log.error("Ошибка : {}", errorMessage);
         throw new NotFoundException(errorMessage);
     }
     private void validEmail(User user) {
