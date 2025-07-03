@@ -1,90 +1,47 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
+    private final InMemoryUserStorage storage;
 
     private final Map<Long, User> users = new HashMap<>();
 
     @GetMapping
     public Collection<User> findAll() {
-        log.info("Получен запрос на получение всех пользователей. Текущее количество: {}", users.size());
-        return users.values();
+        return storage.findAll();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        log.info("Получен запрос на создание нового пользователя: {}", user);
-        // Проверка обязательных условий
-        validEmail(user);
-        validLogin(user);
-        validName(user);
-        validBirthday(user);
-        // Установка дополнительных полей
-        user.setId(getNextId());
-        // Сохранение пользователя
-        users.put(user.getId(), user);
-        log.info("Создан новый пользователь с ID {}: {}", user.getId(), user);
-        return user;
+        return storage.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
-        // Проверка обязательных полей
-        if (newUser.getId() == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации при обновлении пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-        // Поиск существующего пользователя
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
-            log.debug("Найден пользователь для обновления: {}", oldUser);
-            // Проверка и обновление email
-            if (newUser.getEmail() != null && !newUser.getEmail().equals(oldUser.getEmail())) {
-                validEmail(newUser);
-                oldUser.setEmail(newUser.getEmail());
-                log.debug("Обновлен email пользователя ID {}: {}", oldUser.getId(), oldUser.getEmail());
-            }
-            // Обновление остальных полей
-            if (newUser.getLogin() != null && !newUser.getLogin().isBlank()) {
-                validLogin(newUser);
-                oldUser.setLogin(newUser.getLogin());
-                log.debug("Обновлен login пользователя ID {}: {}", oldUser.getId(), oldUser.getLogin());
+        return storage.update(newUser);
+    }
 
-                if (oldUser.getName() == null || oldUser.getName().equals(oldUser.getLogin())) {
-                    oldUser.setName(newUser.getLogin());
-                    log.debug("Имя пользователя ID {} установлено равным login: {}", oldUser.getId(), oldUser.getName());
-                }
-            }
-            if (newUser.getName() != null) {
-                oldUser.setName(newUser.getName());
-                log.debug("Обновлено имя пользователя ID {}: {}", oldUser.getId(), oldUser.getName());
-            }
-            if (newUser.getBirthday() != null) {
-                validBirthday(newUser);
-                oldUser.setBirthday(newUser.getBirthday());
-                log.debug("Обновлена дата рождения пользователя ID {}: {}", oldUser.getId(), oldUser.getBirthday());
-            }
-            return oldUser;
-        }
-        String errorMessage = "Пользователь с ID = " + newUser.getId() + " не найден";
-        log.error("Ошибка при обновлении пользователя: {}", errorMessage);
-        throw new NotFoundException(errorMessage);
+    @DeleteMapping({"/{id}"})
+    public Optional<User> delete (@PathVariable Long id) {
+        return storage.delete(id);
     }
 
     private void validEmail(User user) {
