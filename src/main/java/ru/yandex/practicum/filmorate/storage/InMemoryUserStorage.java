@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class InMemoryUserStorage implements UserStorage{
+public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
 
@@ -112,14 +112,14 @@ public class InMemoryUserStorage implements UserStorage{
         return users.get(id);
     }
 
-    public void validIdUsers (Long id) {
-        log.info("Получен запрос на поиск пользователя по ID: {}",id);
+    public void validIdUsers(Long id) {
+        log.info("Получен запрос на поиск пользователя по ID: {}", id);
         if (id == null) {
             String errorMessage = "ID должен быть указан";
             log.error("Ошибка валидации: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-        if (users.containsKey(id)){
+        if (users.containsKey(id)) {
             log.debug("Пользователь найден.");
             return;
         }
@@ -127,6 +127,7 @@ public class InMemoryUserStorage implements UserStorage{
         log.error("Ошибка : {}", errorMessage);
         throw new NotFoundException(errorMessage);
     }
+
     private void validEmail(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             String errorMessage = "Email должен быть указан";

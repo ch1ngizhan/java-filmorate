@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class InMemoryFilmStorage implements FilmStorage{
+public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Long, Film> films = new HashMap<>();
 
@@ -79,7 +79,6 @@ public class InMemoryFilmStorage implements FilmStorage{
     }
 
 
-
     @Override
     public Optional<Film> delete(Long id) {
         log.info("Получен запрос на удаление фильма с ID {}: {}", id, films.get(id));
@@ -97,6 +96,27 @@ public class InMemoryFilmStorage implements FilmStorage{
         }
         String errorMessage = "Фильм с id = " + id + " не найден";
         log.error("Ошибка при удалении фильма: {}", errorMessage);
+        throw new NotFoundException(errorMessage);
+    }
+
+    public Film getFilmById(Long id) {
+        validIdFilm(id); // Проверяем, что фильм существует
+        return films.get(id);
+    }
+
+    public void validIdFilm(Long id) {
+        log.info("Получен запрос на поиск фильма по ID: {}", id);
+        if (id == null) {
+            String errorMessage = "ID должен быть указан";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
+        if (films.containsKey(id)) {
+            log.debug("Пользователь найден.");
+            return;
+        }
+        String errorMessage = "Film с id = " + id + " не найден";
+        log.error("Ошибка : {}", errorMessage);
         throw new NotFoundException(errorMessage);
     }
 

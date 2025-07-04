@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
@@ -28,10 +27,12 @@ public class FilmController {
     public Film create(@RequestBody Film film) {
         return storage.create(film);
     }
+
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
         return storage.update(newFilm);
     }
+
     @DeleteMapping("/{id}")
     public Optional<Film> delete(@PathVariable Long id) {
         return storage.delete(id);
