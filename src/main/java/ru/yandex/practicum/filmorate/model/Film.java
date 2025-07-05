@@ -18,4 +18,5 @@ public class Film {
     private LocalDate releaseDate;//дата релиза
     private Long duration;//продолжительность фильма
     private Set<Long> likes; //id тех кто поставил лайк
+    private int likesCount; //Кол-во лайков
 }
