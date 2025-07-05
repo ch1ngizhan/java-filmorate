@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
+import ru.yandex.practicum.filmorate.exception.ElementNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -83,7 +84,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "Пользователь с ID = " + newUser.getId() + " не найден";
         log.error("Ошибка при обновлении пользователя: {}", errorMessage);
-        throw new NotFoundException(errorMessage);
+        throw new ElementNotFoundException(errorMessage);
     }
 
     @Override
@@ -101,7 +102,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка при удалении user: {}", errorMessage);
-        throw new NotFoundException(errorMessage);
+        throw new ElementNotFoundException(errorMessage);
     }
 
     public User getUserById(Long id) {
@@ -122,7 +123,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка : {}", errorMessage);
-        throw new NotFoundException(errorMessage);
+        throw new ElementNotFoundException(errorMessage);
     }
 
     private void validEmail(User user) {
