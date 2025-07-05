@@ -16,16 +16,19 @@ public class FilmService {
     private InMemoryUserStorage userStorage;
 
 
-    public void addLike(Long id,Long userId) {
-        log.info("");
-        filmStorage.validIdFilm(id);
+    public void addLike(Long filmId,Long userId) {
+        log.info("Пользователь {} пытается поставить лайк фильму {}", userId, filmId);
+        filmStorage.validIdFilm(filmId);
         userStorage.validIdUsers(userId);
-        Set<Long> likes = filmStorage.getFilmById(id).getLikes();
+        Set<Long> likes = filmStorage.getFilmById(filmId).getLikes();
         if (likes.contains(userId)) {
-            throw new ValidationException("Пользователь уже поставил лайк этому фильму");
+            String errorMessage = String.format("Пользователь %s уже поставил лайк фильму %s", userId, filmId);
+            log.warn(errorMessage);
+            throw new ValidationException(errorMessage);
         }
         likes.add(userId);
-        log.debug("");
+        log.debug("Пользователь {} успешно поставил лайк фильму {}", userId, filmId);
+        filmStorage.getFilmById(filmId).setLikes(likes);
 
     }
 
