@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -88,7 +87,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> delete(Long id) {
+    public void delete(Long id) {
         log.info("Получен запрос на удаление User с ID {}: {}", id, users.get(id));
         if (id == null) {
             String errorMessage = "ID должен быть указан";
@@ -98,9 +97,7 @@ public class InMemoryUserStorage implements UserStorage {
         if (users.containsKey(id)) {
             User oldUser = users.get(id);
             log.debug("Найден User для удаления: {}", oldUser);
-            Optional<User> user = Optional.of(oldUser);
             users.remove(id);
-            return user;
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка при удалении user: {}", errorMessage);
@@ -135,8 +132,8 @@ public class InMemoryUserStorage implements UserStorage {
             throw new ValidationException(errorMessage);
         }
         // Проверка уникальности email
-        boolean emailExists = users.values()
-                .stream()
+        boolean emailExists = users.values().stream()
+                .filter(u -> !u.getId().equals(user.getId()))
                 .anyMatch(u -> u.getEmail().equals(user.getEmail()));
         if (emailExists) {
             String errorMessage = "Этот email уже используется: " + user.getEmail();

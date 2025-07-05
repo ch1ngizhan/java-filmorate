@@ -1,8 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
     private InMemoryUserStorage storage;
 
@@ -34,7 +36,7 @@ public class UserService {
         if (userId.equals(friendId)) {
             String errorMessage = "Пользователь не может добавить самого себя в друзья";
             log.warn("Ошибка валидации: {}", errorMessage);
-            throw new ValidationException(errorMessage);
+            throw new DuplicatedDataException(errorMessage);
         }
         Set<Long> user = storage.getUserById(userId).getFriends();
         Set<Long> friend = storage.getUserById(friendId).getFriends();
@@ -67,7 +69,7 @@ public class UserService {
         if (userId.equals(friendId)) {
             String errorMessage = "Пользователь не может добавить самого себя в друзья";
             log.warn("Ошибка валидации: {}", errorMessage);
-            throw new ValidationException(errorMessage);
+            throw new DuplicatedDataException(errorMessage);
         }
         Set<Long> user = storage.getUserById(userId).getFriends();
         Set<Long> friend = storage.getUserById(friendId).getFriends();

@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -80,7 +79,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
 
     @Override
-    public Optional<Film> delete(Long id) {
+    public void delete(Long id) {
         log.info("Получен запрос на удаление фильма с ID {}: {}", id, films.get(id));
         if (id == null) {
             String errorMessage = "ID должен быть указан";
@@ -90,9 +89,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (films.containsKey(id)) {
             Film oldFilm = films.get(id);
             log.debug("Найден фильм для удаления: {}", oldFilm);
-            Optional<Film> film = Optional.of(oldFilm);
             films.remove(id);
-            return film;
         }
         String errorMessage = "Фильм с id = " + id + " не найден";
         log.error("Ошибка при удалении фильма: {}", errorMessage);
