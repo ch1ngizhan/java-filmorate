@@ -90,6 +90,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             Film oldFilm = films.get(id);
             log.debug("Найден фильм для удаления: {}", oldFilm);
             films.remove(id);
+            return;
         }
         String errorMessage = "Фильм с id = " + id + " не найден";
         log.error("Ошибка при удалении фильма: {}", errorMessage);

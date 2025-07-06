@@ -39,7 +39,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleElementNotFoundException(final ElementNotFoundException e) {
         return new ErrorResponse(e.getMessage());
     }

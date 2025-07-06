@@ -98,6 +98,7 @@ public class InMemoryUserStorage implements UserStorage {
             User oldUser = users.get(id);
             log.debug("Найден User для удаления: {}", oldUser);
             users.remove(id);
+            return;
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка при удалении user: {}", errorMessage);

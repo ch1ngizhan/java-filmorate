@@ -29,7 +29,7 @@ public class FilmController {
         return storage.getFilmById(id);
     }
 
-    @GetMapping("/popular?count={count}")
+    @GetMapping("/popular")
     public Collection<Film> getPopularFilms(
             @RequestParam(defaultValue = "10", required = false) int count
     ) {
