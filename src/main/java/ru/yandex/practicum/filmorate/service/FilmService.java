@@ -34,7 +34,7 @@ public class FilmService {
             throw new DuplicatedDataException(errorMessage);
         }
         likes.add(userId);
-        int count =likes.size();
+        int count = likes.size();
         log.debug("Пользователь {} успешно поставил лайк фильму {}.Кол-во лайков : {} ", userId, filmId, count);
         filmStorage.getFilmById(filmId).setLikes(likes);
         filmStorage.getFilmById(filmId).setLikesCount(count);
