@@ -27,9 +27,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film create(Film film) {
         log.info("Получен запрос на создание нового фильма: {}", film);
         // проверяем выполнение необходимых условий
-        /*validName(film);
+        validName(film);
         validDescription(film);
-        validDuration(film);*/
+        validDuration(film);
         validReleaseDate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -55,7 +55,7 @@ public class InMemoryFilmStorage implements FilmStorage {
                 log.debug("Обновлено название фильма ID {}: {}", oldFilm.getId(), oldFilm.getName());
             }
             if (newFilm.getDescription() != null) {
-                //validDescription(newFilm);
+                validDescription(newFilm);
                 oldFilm.setDescription(newFilm.getDescription());
                 log.debug("Обновлено описание фильма ID {}", oldFilm.getId());
             }
@@ -65,7 +65,7 @@ public class InMemoryFilmStorage implements FilmStorage {
                 log.debug("Обновлена дата релиза фильма ID {}: {}", oldFilm.getId(), oldFilm.getReleaseDate());
             }
             if (newFilm.getDuration() != null) {
-                //validDuration(newFilm);
+                validDuration(newFilm);
                 oldFilm.setDuration(newFilm.getDuration());
                 log.debug("Обновлена продолжительность фильма ID {}: {}", oldFilm.getId(), oldFilm.getDuration());
             }
@@ -126,7 +126,8 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new ValidationException(errorMessage);
         }
     }
-   /* private void validName(Film film) {
+
+    private void validName(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
             String errorMessage = "Не указано название фильма!";
             log.error("Ошибка валидации при создании фильма: {}", errorMessage);
@@ -143,14 +144,13 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
 
-
     private void validDuration(Film film) {
         if (film.getDuration() == null || film.getDuration() <= 0) {
             String errorMessage = "Продолжительность фильма должна быть положительным числом";
             log.error("Ошибка валидации при создании фильма: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-    }*/
+    }
 
     private long getNextId() {
         long currentMaxId = films.keySet()
