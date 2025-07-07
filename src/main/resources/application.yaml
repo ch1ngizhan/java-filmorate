@@ -1,1 +1,1 @@
-logging.level.org.zalando.logbook: DEBUG
+logging.level.org.zalando.logbook: TRACE
