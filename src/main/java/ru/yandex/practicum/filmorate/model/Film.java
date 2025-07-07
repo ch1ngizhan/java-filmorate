@@ -24,5 +24,5 @@ public class Film {
     private Long duration;//продолжительность фильма
     private Set<Long> likes;
     @PositiveOrZero//id тех кто поставил лайк
-    private Long likesCount; //Кол-во лайков
+    private Integer likesCount; //Кол-во лайков
 }
