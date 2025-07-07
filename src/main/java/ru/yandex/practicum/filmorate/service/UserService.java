@@ -35,14 +35,16 @@ public class UserService {
         // Проверяем, что это не один и тот же пользователь
         if (userId.equals(friendId)) {
             String errorMessage = "Пользователь не может добавить самого себя в друзья";
-            log.warn("Ошибка валидации: {}", errorMessage);
+            log.warn("Ошибка : {}", errorMessage);
             throw new DuplicatedDataException(errorMessage);
         }
-        Set<Long> user = storage.getUserById(userId).getFriends();
-        Set<Long> friend = storage.getUserById(friendId).getFriends();
+        User user = storage.getUserById(userId);
+        User friend = storage.getUserById(friendId);
+        Set<Long> userF = user.getFriends();
+        Set<Long> friendF = friend.getFriends();
         // Добавляем друзей
-        boolean youAdded = user.add(friendId);
-        boolean friendAdded = friend.add(userId);
+        boolean youAdded = userF.add(friendId);
+        boolean friendAdded = friendF.add(userId);
         if (youAdded) {
             log.debug("Пользователь {} успешно добавлен в друзья пользователя {}", friendId, userId);
         } else {
@@ -54,9 +56,9 @@ public class UserService {
             log.debug("Пользователь {} уже был в друзьях у пользователя {}", userId, friendId);
         }
 
-        storage.getUserById(userId).setFriends(user);
+        user.setFriends(userF);
         log.trace("Успешно добавлено для пользователя: {}", userId);
-        storage.getUserById(friendId).setFriends(friend);
+        friend.setFriends(friendF);
         log.trace("Успешно добавлено для пользователя: {}", friendId);
     }
 
@@ -68,14 +70,16 @@ public class UserService {
         // Проверяем, что это не один и тот же пользователь
         if (userId.equals(friendId)) {
             String errorMessage = "Пользователь не может добавить самого себя в друзья";
-            log.warn("Ошибка валидации: {}", errorMessage);
+            log.warn("Ошибка : {}", errorMessage);
             throw new DuplicatedDataException(errorMessage);
         }
-        Set<Long> user = storage.getUserById(userId).getFriends();
-        Set<Long> friend = storage.getUserById(friendId).getFriends();
+        User user = storage.getUserById(userId);
+        User friend = storage.getUserById(friendId);
+        Set<Long> userF = user.getFriends();
+        Set<Long> friendF = friend.getFriends();
         // Удаляем друзей
-        boolean removedFromUser = user.remove(friendId);
-        boolean removedFromFriend = friend.remove(userId);
+        boolean removedFromUser = userF.remove(friendId);
+        boolean removedFromFriend = friendF.remove(userId);
 
         if (removedFromUser) {
             log.debug("Пользователь {} успешно удален из друзей пользователя {}", friendId, userId);
@@ -89,9 +93,9 @@ public class UserService {
             log.debug("Пользователь {} не найден в друзьях у пользователя {}", userId, friendId);
         }
 
-        storage.getUserById(userId).setFriends(user);
+        user.setFriends(userF);
         log.trace("Успешно удалено для пользователя: {}", userId);
-        storage.getUserById(friendId).setFriends(friend);
+        friend.setFriends(friendF);
         log.trace("Успешно удалено для пользователя: {}", friendId);
     }
 

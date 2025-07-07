@@ -9,7 +9,7 @@ public class ErrorResponse {
     private final String description;
 
     public ErrorResponse(String description) {
-        this.error = "error";
+        this.error = "Ошибка";
         this.description = description;
     }
 }

@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.ElementNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -25,7 +24,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User create(@RequestBody User user) {
+    public User create(User user) {
         log.info("Получен запрос на создание нового пользователя: {}", user);
         // Проверка обязательных условий
         validEmail(user);
@@ -41,7 +40,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User update(@RequestBody User newUser) {
+    public User update(User newUser) {
         log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
         // Проверка обязательных полей
         if (newUser.getId() == null) {

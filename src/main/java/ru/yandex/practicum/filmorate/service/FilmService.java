@@ -28,14 +28,13 @@ public class FilmService {
         filmStorage.validIdFilm(filmId);
         userStorage.validIdUsers(userId);
         Set<Long> likes = filmStorage.getFilmById(filmId).getLikes();
-        int count = filmStorage.getFilmById(filmId).getLikesCount();
         if (likes.contains(userId)) {
             String errorMessage = String.format("Пользователь %s уже поставил лайк фильму %s", userId, filmId);
             log.warn(errorMessage);
             throw new DuplicatedDataException(errorMessage);
         }
         likes.add(userId);
-        count++;
+        int count = likes.size();
         log.debug("Пользователь {} успешно поставил лайк фильму {}.Кол-во лайков : {} ", userId, filmId, count);
         filmStorage.getFilmById(filmId).setLikes(likes);
         filmStorage.getFilmById(filmId).setLikesCount(count);
@@ -48,7 +47,6 @@ public class FilmService {
         filmStorage.validIdFilm(filmId);
         userStorage.validIdUsers(userId);
         Set<Long> likes = filmStorage.getFilmById(filmId).getLikes();
-        int count = filmStorage.getFilmById(filmId).getLikesCount();
         // Проверяем существование лайка
         if (!likes.contains(userId)) {
             String errorMessage = String.format(
@@ -60,7 +58,7 @@ public class FilmService {
         }
         // Удаляем лайк
         likes.remove(userId);
-        count--;
+        int count = likes.size();
         log.debug("Лайк успешно удален: пользователь {} убрал лайк с фильма {}.Кол-во лайков : {} ", userId, filmId,
                 count);
         filmStorage.getFilmById(filmId).setLikes(likes);
