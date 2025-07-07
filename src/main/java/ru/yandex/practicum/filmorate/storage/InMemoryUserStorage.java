@@ -2,12 +2,11 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.ElementNotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,10 +26,10 @@ public class InMemoryUserStorage implements UserStorage {
     public User create(User user) {
         log.info("Получен запрос на создание нового пользователя: {}", user);
         // Проверка обязательных условий
-        validEmail(user);
+       /* validEmail(user);
         validLogin(user);
         validName(user);
-        validBirthday(user);
+        validBirthday(user);*/
         // Установка дополнительных полей
         user.setId(getNextId());
         // Сохранение пользователя
@@ -54,13 +53,13 @@ public class InMemoryUserStorage implements UserStorage {
             log.debug("Найден пользователь для обновления: {}", oldUser);
             // Проверка и обновление email
             if (newUser.getEmail() != null && !newUser.getEmail().equals(oldUser.getEmail())) {
-                validEmail(newUser);
+                // validEmail(newUser);
                 oldUser.setEmail(newUser.getEmail());
                 log.debug("Обновлен email пользователя ID {}: {}", oldUser.getId(), oldUser.getEmail());
             }
             // Обновление остальных полей
             if (newUser.getLogin() != null && !newUser.getLogin().isBlank()) {
-                validLogin(newUser);
+                // validLogin(newUser);
                 oldUser.setLogin(newUser.getLogin());
                 log.debug("Обновлен login пользователя ID {}: {}", oldUser.getId(), oldUser.getLogin());
 
@@ -74,7 +73,7 @@ public class InMemoryUserStorage implements UserStorage {
                 log.debug("Обновлено имя пользователя ID {}: {}", oldUser.getId(), oldUser.getName());
             }
             if (newUser.getBirthday() != null) {
-                validBirthday(newUser);
+                // validBirthday(newUser);
                 oldUser.setBirthday(newUser.getBirthday());
                 log.debug("Обновлена дата рождения пользователя ID {}: {}", oldUser.getId(), oldUser.getBirthday());
             }
@@ -122,10 +121,10 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "User с id = " + id + " не найден";
         log.error("Ошибка : {}", errorMessage);
-        throw new ElementNotFoundException(errorMessage);
+        throw new UserNotFoundException(errorMessage);
     }
 
-    private void validEmail(User user) {
+   /* private void validEmail(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             String errorMessage = "Email должен быть указан";
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
@@ -163,7 +162,7 @@ public class InMemoryUserStorage implements UserStorage {
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-    }
+    }*/
 
     // Вспомогательный метод для генерации ID нового пользователя
     private long getNextId() {
