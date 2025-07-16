@@ -2,22 +2,18 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.ElementNotFoundException;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
+    private final Map<Long, Set<Long>> friendsId = new HashMap<>();
 
     public Collection<User> findAll() {
         log.info("Получен запрос на получение всех пользователей. Текущее количество: {}", users.size());
@@ -28,10 +24,10 @@ public class InMemoryUserStorage implements UserStorage {
     public User create(User user) {
         log.info("Получен запрос на создание нового пользователя: {}", user);
         // Проверка обязательных условий
-        validEmail(user);
+        /*validEmail(user);
         validLogin(user);
         validName(user);
-        validBirthday(user);
+        validBirthday(user);*/
         // Установка дополнительных полей
         user.setId(getNextId());
         // Сохранение пользователя
@@ -43,7 +39,17 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(User newUser) {
         log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
-        // Проверка обязательных полей
+        User oldUser = findAll().stream()
+                .filter(u -> u.getId().equals(newUser.getId()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("Пользователь с id {} не найден", newUser.getId());
+                    return new NotFoundException("Пользователь с id " + newUser.getId() + " не найден");
+                });
+        users.put(oldUser.getId(), newUser);
+        log.info("Пользователь c id {} обновлен", newUser.getId());
+        return newUser;
+        /*// Проверка обязательных полей
         if (newUser.getId() == null) {
             String errorMessage = "ID должен быть указан";
             log.error("Ошибка валидации при обновлении пользователя: {}", errorMessage);
@@ -83,7 +89,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "Пользователь с ID = " + newUser.getId() + " не найден";
         log.error("Ошибка при обновлении пользователя: {}", errorMessage);
-        throw new ElementNotFoundException(errorMessage);
+        throw new ElementNotFoundException(errorMessage);*/
     }
 
     @Override
@@ -105,9 +111,110 @@ public class InMemoryUserStorage implements UserStorage {
         throw new ElementNotFoundException(errorMessage);
     }
 
-    public User getUserById(Long id) {
-        validIdUsers(id); // Проверяем, что пользователь существует
-        return users.get(id);
+    public Optional<User> getUserById(Long id) {
+        validIdUsers(id);
+        return Optional.ofNullable(users.get(id));
+    }
+
+    public Collection<User> findAllFriend(Long id) {
+        log.info("Получен запрос на получение всех друзей пользователя.");
+        validIdUsers(id);
+        Set<Long> friends = friendsId.get(id);
+        return friends.stream()
+                .map(users::get)
+                .collect(Collectors.toList());
+    }
+
+    public void addFriend(Long userId, Long friendId) {
+        log.info("Попытка добавить друзей: пользователь {} добавляет пользователя {}", userId, friendId);
+        // Проверяем существование пользователей
+        validIdUsers(userId);
+        validIdUsers(friendId);
+        // Проверяем, что это не один и тот же пользователь
+        if (userId.equals(friendId)) {
+            String errorMessage = "Пользователь не может добавить самого себя в друзья";
+            log.warn("Ошибка : {}", errorMessage);
+            throw new DuplicatedDataException(errorMessage);
+        }
+
+        Set<Long> userF = friendsId.get(userId);
+        Set<Long> friendF = friendsId.get(friendId);
+        // Добавляем друзей
+        boolean userAdded = userF.add(friendId);
+        boolean friendAdded = friendF.add(userId);
+        if (userAdded) {
+            log.debug("Пользователь {} успешно добавлен в друзья пользователя {}", friendId, userId);
+        } else {
+            log.debug("Пользователь {} уже был в друзьях у пользователя {}", friendId, userId);
+        }
+        if (friendAdded) {
+            log.debug("Пользователь {} успешно добавлен в друзья пользователя {}", userId, friendId);
+        } else {
+            log.debug("Пользователь {} уже был в друзьях у пользователя {}", userId, friendId);
+        }
+
+        friendsId.put(userId, userF);
+        log.trace("Успешно добавлено для пользователя: {}", userId);
+        friendsId.put(friendId, friendF);
+        log.trace("Успешно добавлено для пользователя: {}", friendId);
+    }
+
+    public void deleteFriend(Long userId, Long friendId) {
+        log.info("Попытка удалить друзей: пользователь {} добавляет пользователя {}", userId, friendId);
+        // Проверяем существование пользователей
+        validIdUsers(userId);
+        validIdUsers(friendId);
+        // Проверяем, что это не один и тот же пользователь
+        if (userId.equals(friendId)) {
+            String errorMessage = "Пользователь не может добавить самого себя в друзья";
+            log.warn("Ошибка : {}", errorMessage);
+            throw new DuplicatedDataException(errorMessage);
+        }
+        Set<Long> userF = friendsId.get(userId);
+        Set<Long> friendF = friendsId.get(friendId);
+        // Удаляем друзей
+        boolean removedFromUser = userF.remove(friendId);
+        boolean removedFromFriend = friendF.remove(userId);
+
+        if (removedFromUser) {
+            log.debug("Пользователь {} успешно удален из друзей пользователя {}", friendId, userId);
+        } else {
+            log.debug("Пользователь {} не найден в друзьях у пользователя {}", friendId, userId);
+        }
+
+        if (removedFromFriend) {
+            log.debug("Пользователь {} успешно удален из друзей пользователя {}", userId, friendId);
+        } else {
+            log.debug("Пользователь {} не найден в друзьях у пользователя {}", userId, friendId);
+        }
+
+        friendsId.put(userId, userF);
+        log.trace("Успешно удалено для пользователя: {}", userId);
+        friendsId.put(friendId, friendF);
+        log.trace("Успешно удалено для пользователя: {}", friendId);
+    }
+
+    public Collection<User> getCommonFriends(Long id, Long otherId) {
+        log.info("Получение общих друзей пользователей {} и {}", id, otherId);
+
+        // Проверяем существование пользователей
+        validIdUsers(id);
+        validIdUsers(otherId);
+
+        // Получаем множества ID друзей для каждого пользователя
+        Set<Long> firstUserFriends = friendsId.get(id);
+        Set<Long> secondUserFriends = friendsId.get(otherId);
+
+        // Создаем копию первого множества и находим пересечение
+        Set<Long> commonFriendIds = new HashSet<>(firstUserFriends);
+        commonFriendIds.retainAll(secondUserFriends);
+
+        log.debug("Найдено {} общих друзей", commonFriendIds.size());
+
+        // Преобразуем ID в объекты User
+        return commonFriendIds.stream()
+                .map(users::get)
+                .collect(Collectors.toList());
     }
 
     public void validIdUsers(Long id) {
@@ -126,7 +233,7 @@ public class InMemoryUserStorage implements UserStorage {
         throw new UserNotFoundException(errorMessage);
     }
 
-    private void validEmail(User user) {
+/*    private void validEmail(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             String errorMessage = "Email должен быть указан";
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
@@ -164,7 +271,7 @@ public class InMemoryUserStorage implements UserStorage {
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-    }
+    }*/
 
     // Вспомогательный метод для генерации ID нового пользователя
     private long getNextId() {

@@ -18,7 +18,7 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController(new InMemoryUserStorage(), new UserService());
+        userController = new UserController(new UserService(new InMemoryUserStorage()));
     }
 
 

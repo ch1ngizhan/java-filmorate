@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.util.Collection;
 
@@ -14,19 +13,17 @@ import java.util.Collection;
 @RequestMapping("/films")
 @RequiredArgsConstructor
 public class FilmController {
-
-    private final InMemoryFilmStorage storage;
     private final FilmService service;
 
 
     @GetMapping
     public Collection<Film> findAll() {
-        return storage.findAll();
+        return service.findAll();
     }
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable Long id) {
-        return storage.getFilmById(id);
+        return service.getFilmById(id);
     }
 
     @GetMapping("/popular")
@@ -38,12 +35,12 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        return storage.create(film);
+        return service.create(film);
     }
 
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
-        return storage.update(newFilm);
+        return service.update(newFilm);
     }
 
     @PutMapping(("/{id}/like/{userId}"))
@@ -54,7 +51,7 @@ public class FilmController {
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        storage.delete(id);
+        service.delete(id);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
