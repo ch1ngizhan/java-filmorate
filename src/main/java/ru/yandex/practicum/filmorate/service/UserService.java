@@ -16,7 +16,7 @@ public class UserService {
     private final InMemoryUserStorage storage;
 
     public Collection<User> findAllFriend(Long id) {
-        return findAllFriend(id);
+        return storage.findAllFriend(id);
     }
 
     public User getUserById(Long userId) {

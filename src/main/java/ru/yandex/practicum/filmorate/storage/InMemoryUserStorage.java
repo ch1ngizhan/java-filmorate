@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,10 +25,10 @@ public class InMemoryUserStorage implements UserStorage {
     public User create(User user) {
         log.info("Получен запрос на создание нового пользователя: {}", user);
         // Проверка обязательных условий
-        /*validEmail(user);
+        validEmail(user);
         validLogin(user);
         validName(user);
-        validBirthday(user);*/
+        validBirthday(user);
         // Установка дополнительных полей
         user.setId(getNextId());
         // Сохранение пользователя
@@ -117,11 +118,14 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public Collection<User> findAllFriend(Long id) {
-        log.info("Получен запрос на получение всех друзей пользователя.");
+        log.info("Получен запрос на получение всех друзей пользователя {}.", id);
         validIdUsers(id);
-        Set<Long> friends = friendsId.get(id);
+        Set<Long> friends = friendsId.getOrDefault(id, Collections.emptySet());
+        log.info("Получен список друзей пользователя {}. Количество: {}", id, friends.size());
+
         return friends.stream()
-                .map(users::get)
+                .map(users::get)       // Преобразуем ID в пользователей
+                .filter(Objects::nonNull) // Фильтруем отсутствующих пользователей
                 .collect(Collectors.toList());
     }
 
@@ -137,8 +141,8 @@ public class InMemoryUserStorage implements UserStorage {
             throw new DuplicatedDataException(errorMessage);
         }
 
-        Set<Long> userF = friendsId.get(userId);
-        Set<Long> friendF = friendsId.get(friendId);
+        Set<Long> userF = friendsId.getOrDefault(userId, new HashSet<>());
+        Set<Long> friendF = friendsId.getOrDefault(friendId, new HashSet<>());
         // Добавляем друзей
         boolean userAdded = userF.add(friendId);
         boolean friendAdded = friendF.add(userId);
@@ -160,7 +164,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        log.info("Попытка удалить друзей: пользователь {} добавляет пользователя {}", userId, friendId);
+        log.info("Попытка удалить друзей: пользователь {} удаляет пользователя {}", userId, friendId);
         // Проверяем существование пользователей
         validIdUsers(userId);
         validIdUsers(friendId);
@@ -170,8 +174,9 @@ public class InMemoryUserStorage implements UserStorage {
             log.warn("Ошибка : {}", errorMessage);
             throw new DuplicatedDataException(errorMessage);
         }
-        Set<Long> userF = friendsId.get(userId);
-        Set<Long> friendF = friendsId.get(friendId);
+        Set<Long> userF = friendsId.getOrDefault(userId, new HashSet<>());
+        Set<Long> friendF = friendsId.getOrDefault(friendId, new HashSet<>());
+
         // Удаляем друзей
         boolean removedFromUser = userF.remove(friendId);
         boolean removedFromFriend = friendF.remove(userId);
@@ -202,8 +207,8 @@ public class InMemoryUserStorage implements UserStorage {
         validIdUsers(otherId);
 
         // Получаем множества ID друзей для каждого пользователя
-        Set<Long> firstUserFriends = friendsId.get(id);
-        Set<Long> secondUserFriends = friendsId.get(otherId);
+        Set<Long> firstUserFriends = friendsId.getOrDefault(id, Collections.emptySet());
+        Set<Long> secondUserFriends = friendsId.getOrDefault(otherId, Collections.emptySet());
 
         // Создаем копию первого множества и находим пересечение
         Set<Long> commonFriendIds = new HashSet<>(firstUserFriends);
@@ -219,21 +224,13 @@ public class InMemoryUserStorage implements UserStorage {
 
     public void validIdUsers(Long id) {
         log.info("Получен запрос на поиск пользователя по ID: {}", id);
-        if (id == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации: {}", errorMessage);
-            throw new ValidationException(errorMessage);
+        if (!users.containsKey(id)) {
+            throw new UserNotFoundException("User с id = " + id + " не найден");
+
         }
-        if (users.containsKey(id)) {
-            log.debug("Пользователь найден.");
-            return;
-        }
-        String errorMessage = "User с id = " + id + " не найден";
-        log.error("Ошибка : {}", errorMessage);
-        throw new UserNotFoundException(errorMessage);
     }
 
-/*    private void validEmail(User user) {
+    private void validEmail(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             String errorMessage = "Email должен быть указан";
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
@@ -271,7 +268,7 @@ public class InMemoryUserStorage implements UserStorage {
             log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-    }*/
+    }
 
     // Вспомогательный метод для генерации ID нового пользователя
     private long getNextId() {

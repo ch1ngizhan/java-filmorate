@@ -8,8 +8,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -27,10 +27,10 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film create(Film film) {
         log.info("Получен запрос на создание нового фильма: {}", film);
         // проверяем выполнение необходимых условий
-        /*validName(film);
+        validName(film);
         validDescription(film);
         validDuration(film);
-        validReleaseDate(film);*/
+        validReleaseDate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
         log.info("Создан новый фильм с ID {}: {}", film.getId(), film);
@@ -117,7 +117,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public void addLike(Long filmId, Long userId) {
         log.info("Пользователь {} пытается поставить лайк фильму {}", userId, filmId);
         validIdFilm(filmId);
-        Set<Long> likes = likesId.get(filmId);
+        Set<Long> likes = likesId.getOrDefault(filmId, new HashSet<>());
         if (likes.contains(userId)) {
             String errorMessage = String.format("Пользователь %s уже поставил лайк фильму %s", userId, filmId);
             log.warn(errorMessage);
@@ -134,7 +134,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public void removeLike(Long filmId, Long userId) {
         log.info("Попытка удаления лайка: пользователь {} удаляет лайк с фильма {}", userId, filmId);
         validIdFilm(filmId);
-        Set<Long> likes = likesId.get(filmId);
+        Set<Long> likes = likesId.getOrDefault(filmId, new HashSet<>());
         // Проверяем существование лайка
         if (!likes.contains(userId)) {
             String errorMessage = String.format(
@@ -155,9 +155,10 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     public Collection<Film> getPopularFilms(int count) {
         return findAll().stream()
-                .sorted(Comparator.comparingInt(Film::getLikesCount).reversed())
-                .limit(count > 0 ? count : 10)
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparingInt((Film film) -> film.getLikesCount() == null ? 0 : film.getLikesCount())
+                        .reversed())
+                .limit(count)
+                .toList();
     }
 
     public void validIdFilm(Long id) {
@@ -176,7 +177,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         throw new ElementNotFoundException(errorMessage);
     }
 
-/*    private void validReleaseDate(Film film) {
+    private void validReleaseDate(Film film) {
         if (film.getReleaseDate() == null || !LocalDate.of(1895, 12, 28)
                 .isBefore(film.getReleaseDate())) {
             String errorMessage = "Дата релиза должна быть после 28 декабря 1895 года";
@@ -208,7 +209,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             log.error("Ошибка валидации при создании фильма: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-    }*/
+    }
 
     private long getNextId() {
         long currentMaxId = films.keySet()
