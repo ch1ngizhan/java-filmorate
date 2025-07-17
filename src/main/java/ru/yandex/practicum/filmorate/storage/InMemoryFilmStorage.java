@@ -40,6 +40,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film update(Film newFilm) {
         log.info("Получен запрос на обновление фильма с ID {}: {}", newFilm.getId(), newFilm);
+        if (newFilm.getId() == null) {
+            String errorMessage = "ID фильма не должен быть пустым";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
         Film oldFilm = findAll().stream()
                 .filter(f -> f.getId().equals(newFilm.getId()))
                 .findFirst()

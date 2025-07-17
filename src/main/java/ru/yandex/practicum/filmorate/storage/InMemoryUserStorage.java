@@ -40,6 +40,11 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(User newUser) {
         log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
+        if (newUser.getId() == null) {
+            String errorMessage = "ID пользователя не должен быть пустым";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
         User oldUser = findAll().stream()
                 .filter(u -> u.getId().equals(newUser.getId()))
                 .findFirst()
