@@ -52,11 +52,6 @@ public class InMemoryUserStorage implements UserStorage {
         log.info("Пользователь c id {} обновлен", newUser.getId());
         return newUser;*/
         // Проверка обязательных полей
-        if (newUser.getId() == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации при обновлении пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
         // Поиск существующего пользователя
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());

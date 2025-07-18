@@ -43,7 +43,11 @@ public class FilmServiceImpl implements FilmService {
 
     public Film update(Film newFilm) {
         log.info("Запрос на обновление фильма: {}", newFilm);
-
+        if (newFilm.getId() == null) {
+            String errorMessage = "ID фильма не должен быть пустым";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
         Film existingFilm = findFilmOrThrow(newFilm.getId());
         log.debug("Найден фильм для обновления: {}", existingFilm);
 

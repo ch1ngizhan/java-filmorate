@@ -112,7 +112,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User update(User newUser) {
         log.info("Запрос на обновление пользователя: {}", newUser);
-
+        if (newUser.getId() == null) {
+            String errorMessage = "ID пользователя не должен быть пустым";
+            log.error("Ошибка валидации: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
         User existingUser = findUserOrThrow(newUser.getId());
         log.debug("Найден пользователь для обновления: {}", existingUser);
 

@@ -52,11 +52,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.put(oldFilm.getId(), newFilm);
         log.info("Фильм c id {} обновлен", newFilm.getId());
         return newFilm;*/
-        if (newFilm.getId() == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации при обновлении фильма: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
         // проверяем выполнение необходимых условий
         if (films.containsKey(newFilm.getId())) {
             Film oldFilm = films.get(newFilm.getId());
