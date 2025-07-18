@@ -2,10 +2,10 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.*;
+import ru.yandex.practicum.filmorate.exception.ElementNotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,6 +16,7 @@ public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
     private final Map<Long, Set<Long>> friendsId = new HashMap<>();
 
+    @Override
     public Collection<User> findAll() {
         log.info("Получен запрос на получение всех пользователей. Текущее количество: {}", users.size());
         return users.values();
@@ -24,11 +25,6 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User create(User user) {
         log.info("Получен запрос на создание нового пользователя: {}", user);
-        // Проверка обязательных условий
-        validEmail(user);
-        validLogin(user);
-        validName(user);
-        validBirthday(user);
         // Установка дополнительных полей
         user.setId(getNextId());
         // Сохранение пользователя
@@ -40,7 +36,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(User newUser) {
         log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
-        if (newUser.getId() == null) {
+        /*if (newUser.getId() == null) {
             String errorMessage = "ID пользователя не должен быть пустым";
             log.error("Ошибка валидации: {}", errorMessage);
             throw new ValidationException(errorMessage);
@@ -54,8 +50,8 @@ public class InMemoryUserStorage implements UserStorage {
                 });
         users.put(oldUser.getId(), newUser);
         log.info("Пользователь c id {} обновлен", newUser.getId());
-        return newUser;
-        /*// Проверка обязательных полей
+        return newUser;*/
+        // Проверка обязательных полей
         if (newUser.getId() == null) {
             String errorMessage = "ID должен быть указан";
             log.error("Ошибка валидации при обновлении пользователя: {}", errorMessage);
@@ -67,13 +63,11 @@ public class InMemoryUserStorage implements UserStorage {
             log.debug("Найден пользователь для обновления: {}", oldUser);
             // Проверка и обновление email
             if (newUser.getEmail() != null && !newUser.getEmail().equals(oldUser.getEmail())) {
-                validEmail(newUser);
                 oldUser.setEmail(newUser.getEmail());
                 log.debug("Обновлен email пользователя ID {}: {}", oldUser.getId(), oldUser.getEmail());
             }
             // Обновление остальных полей
             if (newUser.getLogin() != null && !newUser.getLogin().isBlank()) {
-                validLogin(newUser);
                 oldUser.setLogin(newUser.getLogin());
                 log.debug("Обновлен login пользователя ID {}: {}", oldUser.getId(), oldUser.getLogin());
 
@@ -87,7 +81,6 @@ public class InMemoryUserStorage implements UserStorage {
                 log.debug("Обновлено имя пользователя ID {}: {}", oldUser.getId(), oldUser.getName());
             }
             if (newUser.getBirthday() != null) {
-                validBirthday(newUser);
                 oldUser.setBirthday(newUser.getBirthday());
                 log.debug("Обновлена дата рождения пользователя ID {}: {}", oldUser.getId(), oldUser.getBirthday());
             }
@@ -95,7 +88,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         String errorMessage = "Пользователь с ID = " + newUser.getId() + " не найден";
         log.error("Ошибка при обновлении пользователя: {}", errorMessage);
-        throw new ElementNotFoundException(errorMessage);*/
+        throw new ElementNotFoundException(errorMessage);
     }
 
     @Override
@@ -117,14 +110,14 @@ public class InMemoryUserStorage implements UserStorage {
         throw new ElementNotFoundException(errorMessage);
     }
 
+    @Override
     public Optional<User> getUserById(Long id) {
-        validIdUsers(id);
         return Optional.ofNullable(users.get(id));
     }
 
+    @Override
     public Collection<User> findAllFriend(Long id) {
         log.info("Получен запрос на получение всех друзей пользователя {}.", id);
-        validIdUsers(id);
         Set<Long> friends = friendsId.getOrDefault(id, Collections.emptySet());
         log.info("Получен список друзей пользователя {}. Количество: {}", id, friends.size());
 
@@ -134,17 +127,11 @@ public class InMemoryUserStorage implements UserStorage {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public void addFriend(Long userId, Long friendId) {
         log.info("Попытка добавить друзей: пользователь {} добавляет пользователя {}", userId, friendId);
-        // Проверяем существование пользователей
-        validIdUsers(userId);
-        validIdUsers(friendId);
         // Проверяем, что это не один и тот же пользователь
-        if (userId.equals(friendId)) {
-            String errorMessage = "Пользователь не может добавить самого себя в друзья";
-            log.warn("Ошибка : {}", errorMessage);
-            throw new DuplicatedDataException(errorMessage);
-        }
+
 
         Set<Long> userF = friendsId.getOrDefault(userId, new HashSet<>());
         Set<Long> friendF = friendsId.getOrDefault(friendId, new HashSet<>());
@@ -168,17 +155,9 @@ public class InMemoryUserStorage implements UserStorage {
         log.trace("Успешно добавлено для пользователя: {}", friendId);
     }
 
+    @Override
     public void deleteFriend(Long userId, Long friendId) {
         log.info("Попытка удалить друзей: пользователь {} удаляет пользователя {}", userId, friendId);
-        // Проверяем существование пользователей
-        validIdUsers(userId);
-        validIdUsers(friendId);
-        // Проверяем, что это не один и тот же пользователь
-        if (userId.equals(friendId)) {
-            String errorMessage = "Пользователь не может добавить самого себя в друзья";
-            log.warn("Ошибка : {}", errorMessage);
-            throw new DuplicatedDataException(errorMessage);
-        }
         Set<Long> userF = friendsId.getOrDefault(userId, new HashSet<>());
         Set<Long> friendF = friendsId.getOrDefault(friendId, new HashSet<>());
 
@@ -204,12 +183,9 @@ public class InMemoryUserStorage implements UserStorage {
         log.trace("Успешно удалено для пользователя: {}", friendId);
     }
 
+    @Override
     public Collection<User> getCommonFriends(Long id, Long otherId) {
         log.info("Получение общих друзей пользователей {} и {}", id, otherId);
-
-        // Проверяем существование пользователей
-        validIdUsers(id);
-        validIdUsers(otherId);
 
         // Получаем множества ID друзей для каждого пользователя
         Set<Long> firstUserFriends = friendsId.getOrDefault(id, Collections.emptySet());
@@ -225,54 +201,6 @@ public class InMemoryUserStorage implements UserStorage {
         return commonFriendIds.stream()
                 .map(users::get)
                 .collect(Collectors.toList());
-    }
-
-    public void validIdUsers(Long id) {
-        log.info("Получен запрос на поиск пользователя по ID: {}", id);
-        if (!users.containsKey(id)) {
-            throw new UserNotFoundException("User с id = " + id + " не найден");
-
-        }
-    }
-
-    private void validEmail(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            String errorMessage = "Email должен быть указан";
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-        // Проверка уникальности email
-        boolean emailExists = users.values().stream()
-                .filter(u -> !u.getId().equals(user.getId()))
-                .anyMatch(u -> u.getEmail().equals(user.getEmail()));
-        if (emailExists) {
-            String errorMessage = "Этот email уже используется: " + user.getEmail();
-            log.error("Ошибка при создании пользователя: {}", errorMessage);
-            throw new DuplicatedDataException(errorMessage);
-        }
-    }
-
-    private void validLogin(User user) {
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
-            String errorMessage = "Логин обязателен и не может быть пустым";
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
-
-    private void validName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.debug("Имя пользователя не указано, будет использован логин: {}", user.getLogin());
-            user.setName(user.getLogin());
-        }
-    }
-
-    private void validBirthday(User user) {
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            String errorMessage = "Дата рождения не может быть в будущем: " + user.getBirthday();
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
     }
 
     // Вспомогательный метод для генерации ID нового пользователя

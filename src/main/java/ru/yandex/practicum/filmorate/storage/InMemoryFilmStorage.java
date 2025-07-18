@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -18,6 +17,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
     private final Map<Long, Set<Long>> likesId = new HashMap<>();
 
+    @Override
     public Collection<Film> findAll() {
         log.info("Получен запрос на получение всех фильмов. Текущее количество: {}", films.size());
         return films.values();
@@ -26,11 +26,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film create(Film film) {
         log.info("Получен запрос на создание нового фильма: {}", film);
-        // проверяем выполнение необходимых условий
-        validName(film);
-        validDescription(film);
-        validDuration(film);
-        validReleaseDate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
         log.info("Создан новый фильм с ID {}: {}", film.getId(), film);
@@ -40,7 +35,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film update(Film newFilm) {
         log.info("Получен запрос на обновление фильма с ID {}: {}", newFilm.getId(), newFilm);
-        if (newFilm.getId() == null) {
+       /* if (newFilm.getId() == null) {
             String errorMessage = "ID фильма не должен быть пустым";
             log.error("Ошибка валидации: {}", errorMessage);
             throw new ValidationException(errorMessage);
@@ -56,8 +51,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
         films.put(oldFilm.getId(), newFilm);
         log.info("Фильм c id {} обновлен", newFilm.getId());
-        return newFilm;
-       /* if (newFilm.getId() == null) {
+        return newFilm;*/
+        if (newFilm.getId() == null) {
             String errorMessage = "ID должен быть указан";
             log.error("Ошибка валидации при обновлении фильма: {}", errorMessage);
             throw new ValidationException(errorMessage);
@@ -72,17 +67,14 @@ public class InMemoryFilmStorage implements FilmStorage {
                 log.debug("Обновлено название фильма ID {}: {}", oldFilm.getId(), oldFilm.getName());
             }
             if (newFilm.getDescription() != null) {
-                validDescription(newFilm);
                 oldFilm.setDescription(newFilm.getDescription());
                 log.debug("Обновлено описание фильма ID {}", oldFilm.getId());
             }
             if (newFilm.getReleaseDate() != null) {
-                validReleaseDate(newFilm);
                 oldFilm.setReleaseDate(newFilm.getReleaseDate());
                 log.debug("Обновлена дата релиза фильма ID {}: {}", oldFilm.getId(), oldFilm.getReleaseDate());
             }
             if (newFilm.getDuration() != null) {
-                validDuration(newFilm);
                 oldFilm.setDuration(newFilm.getDuration());
                 log.debug("Обновлена продолжительность фильма ID {}: {}", oldFilm.getId(), oldFilm.getDuration());
             }
@@ -91,7 +83,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         String errorMessage = "Фильм с id = " + newFilm.getId() + " не найден";
         log.error("Ошибка при обновлении фильма: {}", errorMessage);
-        throw new ElementNotFoundException(errorMessage);*/
+        throw new ElementNotFoundException(errorMessage);
     }
 
 
@@ -114,14 +106,14 @@ public class InMemoryFilmStorage implements FilmStorage {
         throw new ElementNotFoundException(errorMessage);
     }
 
+    @Override
     public Optional<Film> getFilmById(Long id) {
-        validIdFilm(id); // Проверяем, что фильм существует
         return Optional.ofNullable(films.get(id));
     }
 
+    @Override
     public void addLike(Long filmId, Long userId) {
         log.info("Пользователь {} пытается поставить лайк фильму {}", userId, filmId);
-        validIdFilm(filmId);
         Set<Long> likes = likesId.getOrDefault(filmId, new HashSet<>());
         if (likes.contains(userId)) {
             String errorMessage = String.format("Пользователь %s уже поставил лайк фильму %s", userId, filmId);
@@ -136,9 +128,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     // Удаление лайка
+    @Override
     public void removeLike(Long filmId, Long userId) {
         log.info("Попытка удаления лайка: пользователь {} удаляет лайк с фильма {}", userId, filmId);
-        validIdFilm(filmId);
         Set<Long> likes = likesId.getOrDefault(filmId, new HashSet<>());
         // Проверяем существование лайка
         if (!likes.contains(userId)) {
@@ -158,62 +150,13 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.get(filmId).setLikesCount(count);
     }
 
+    @Override
     public Collection<Film> getPopularFilms(int count) {
         return findAll().stream()
                 .sorted(Comparator.comparingInt((Film film) -> film.getLikesCount() == null ? 0 : film.getLikesCount())
                         .reversed())
                 .limit(count)
                 .toList();
-    }
-
-    public void validIdFilm(Long id) {
-        log.info("Получен запрос на поиск фильма по ID: {}", id);
-        if (id == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-        if (films.containsKey(id)) {
-            log.debug("Пользователь найден.");
-            return;
-        }
-        String errorMessage = "Film с id = " + id + " не найден";
-        log.error("Ошибка : {}", errorMessage);
-        throw new ElementNotFoundException(errorMessage);
-    }
-
-    private void validReleaseDate(Film film) {
-        if (film.getReleaseDate() == null || !LocalDate.of(1895, 12, 28)
-                .isBefore(film.getReleaseDate())) {
-            String errorMessage = "Дата релиза должна быть после 28 декабря 1895 года";
-            log.error("Ошибка валидации при создании фильма: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
-
-    private void validName(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            String errorMessage = "Не указано название фильма!";
-            log.error("Ошибка валидации при создании фильма: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
-
-    private void validDescription(Film film) {
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            String errorMessage = "Превышено максимальное количество символов в описании (макс. 200)";
-            log.error("Ошибка валидации при создании фильма: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
-
-
-    private void validDuration(Film film) {
-        if (film.getDuration() == null || film.getDuration() <= 0) {
-            String errorMessage = "Продолжительность фильма должна быть положительным числом";
-            log.error("Ошибка валидации при создании фильма: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
     }
 
     private long getNextId() {
