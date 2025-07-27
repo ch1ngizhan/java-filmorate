@@ -1,140 +1,89 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
-
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserService service;
 
     @GetMapping
     public Collection<User> findAll() {
-        log.info("Получен запрос на получение всех пользователей. Текущее количество: {}", users.size());
-        return users.values();
+        log.info("Запрос на получение всех пользователей");
+        Collection<User> users = service.findAll();
+        log.info("Возвращено {} пользователей", users.size());
+        return users;
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        log.info("Запрос пользователя с ID: {}", id);
+        User user = service.getUserById(id);
+        log.info("Найден пользователь: {}", user);
+        return user;
+    }
+
+    @GetMapping("/{id}/friends")
+    public Collection<User> findAllFriend(@PathVariable Long id) {
+        log.info("Запрос списка друзей пользователя с ID: {}", id);
+        Collection<User> friends = service.findAllFriend(id);
+        log.info("Возвращено {} друзей пользователя ID {}", friends.size(), id);
+        return friends;
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Collection<User> getCommonFriends(@PathVariable Long id,
+                                             @PathVariable Long otherId) {
+        log.info("Запрос общих друзей пользователей ID {} и ID {}", id, otherId);
+        Collection<User> commonFriends = service.getCommonFriends(id, otherId);
+        log.info("Найдено {} общих друзей между пользователями {} и {}", commonFriends.size(), id, otherId);
+        return commonFriends;
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        log.info("Получен запрос на создание нового пользователя: {}", user);
-        // Проверка обязательных условий
-        validEmail(user);
-        validLogin(user);
-        validName(user);
-        validBirthday(user);
-        // Установка дополнительных полей
-        user.setId(getNextId());
-        // Сохранение пользователя
-        users.put(user.getId(), user);
-        log.info("Создан новый пользователь с ID {}: {}", user.getId(), user);
-        return user;
+        log.info("Запрос на создание пользователя: {}", user);
+        User createdUser = service.create(user);
+        log.info("Пользователь создан: {}", createdUser);
+        return createdUser;
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        log.info("Получен запрос на обновление пользователя с ID {}: {}", newUser.getId(), newUser);
-        // Проверка обязательных полей
-        if (newUser.getId() == null) {
-            String errorMessage = "ID должен быть указан";
-            log.error("Ошибка валидации при обновлении пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-        // Поиск существующего пользователя
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
-            log.debug("Найден пользователь для обновления: {}", oldUser);
-            // Проверка и обновление email
-            if (newUser.getEmail() != null && !newUser.getEmail().equals(oldUser.getEmail())) {
-                validEmail(newUser);
-                oldUser.setEmail(newUser.getEmail());
-                log.debug("Обновлен email пользователя ID {}: {}", oldUser.getId(), oldUser.getEmail());
-            }
-            // Обновление остальных полей
-            if (newUser.getLogin() != null && !newUser.getLogin().isBlank()) {
-                validLogin(newUser);
-                oldUser.setLogin(newUser.getLogin());
-                log.debug("Обновлен login пользователя ID {}: {}", oldUser.getId(), oldUser.getLogin());
-
-                if (oldUser.getName() == null || oldUser.getName().equals(oldUser.getLogin())) {
-                    oldUser.setName(newUser.getLogin());
-                    log.debug("Имя пользователя ID {} установлено равным login: {}", oldUser.getId(), oldUser.getName());
-                }
-            }
-            if (newUser.getName() != null) {
-                oldUser.setName(newUser.getName());
-                log.debug("Обновлено имя пользователя ID {}: {}", oldUser.getId(), oldUser.getName());
-            }
-            if (newUser.getBirthday() != null) {
-                validBirthday(newUser);
-                oldUser.setBirthday(newUser.getBirthday());
-                log.debug("Обновлена дата рождения пользователя ID {}: {}", oldUser.getId(), oldUser.getBirthday());
-            }
-            return oldUser;
-        }
-        String errorMessage = "Пользователь с ID = " + newUser.getId() + " не найден";
-        log.error("Ошибка при обновлении пользователя: {}", errorMessage);
-        throw new NotFoundException(errorMessage);
+        log.info("Запрос на обновление пользователя: {}", newUser);
+        User updatedUser = service.update(newUser);
+        log.info("Пользователь обновлен: {}", updatedUser);
+        return updatedUser;
     }
 
-    private void validEmail(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            String errorMessage = "Email должен быть указан";
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-        // Проверка уникальности email
-        boolean emailExists = users.values()
-                .stream()
-                .anyMatch(u -> u.getEmail().equals(user.getEmail()));
-        if (emailExists) {
-            String errorMessage = "Этот email уже используется: " + user.getEmail();
-            log.error("Ошибка при создании пользователя: {}", errorMessage);
-            throw new DuplicatedDataException(errorMessage);
-        }
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Long id,
+                          @PathVariable Long friendId) {
+        log.info("Запрос на добавление в друзья: пользователь {} добавляет пользователя {}", id, friendId);
+        service.addFriend(id, friendId);
+        log.info("Пользователь {} добавлен в друзья к пользователю {}", friendId, id);
     }
 
-    private void validLogin(User user) {
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
-            String errorMessage = "Логин обязателен и не может быть пустым";
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
+    @DeleteMapping({"/{id}"})
+    public void delete(@PathVariable Long id) {
+        log.info("Запрос на удаление пользователя с ID: {}", id);
+        service.delete(id);
+        log.info("Пользователь с ID {} удален", id);
     }
 
-    private void validName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.debug("Имя пользователя не указано, будет использован логин: {}", user.getLogin());
-            user.setName(user.getLogin());
-        }
-    }
-
-    private void validBirthday(User user) {
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            String errorMessage = "Дата рождения не может быть в будущем: " + user.getBirthday();
-            log.error("Ошибка валидации при создании пользователя: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
-
-    // Вспомогательный метод для генерации ID нового пользователя
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable Long id,
+                             @PathVariable Long friendId) {
+        log.info("Запрос на удаление из друзей: пользователь {} удаляет пользователя {}", id, friendId);
+        service.deleteFriend(id, friendId);
+        log.info("Пользователь {} удален из друзей пользователя {}", friendId, id);
     }
 }
-
