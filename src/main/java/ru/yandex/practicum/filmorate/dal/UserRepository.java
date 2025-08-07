@@ -11,20 +11,20 @@ import java.util.Optional;
 
 @Repository
 public class UserRepository extends BaseRepository<User> implements UserStorage {
-    public static final String DELETE_FRIENDSHIP_QUERY = "DELETE FROM friendship WHERE user_id = ? AND friend_id = ?";
+    public static final String DELETE_FRIENDSHIP_QUERY = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
     public static final String FIND_FRIENDS_QUERY = "SELECT u.* FROM users u " +
-            "JOIN friendship f ON u.user_id = f.friend_id " +
+            "JOIN friendships f ON u.user_id = f.friend_id " +
             "WHERE f.user_id = ?";
     public static final String FIND_COMMON_FRIENDS_QUERY = "SELECT u.* FROM users u " +
-            "JOIN friendship f1 ON u.user_id = f1.friend_id " +
-            "JOIN friendship f2 ON u.user_id = f2.friend_id " +
+            "JOIN friendships f1 ON u.user_id = f1.friend_id " +
+            "JOIN friendships f2 ON u.user_id = f2.friend_id " +
             "WHERE f1.user_id = ? AND f2.user_id = ?";
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
     private static final String INSERT_QUERY = "INSERT INTO users (email, login, name, birthday) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             " WHERE user_id = ?";
-    private static final String INSERT_FRIENDSHIP_QUERY = "INSERT INTO friendship (user_id, friend_id, status) " +
+    private static final String INSERT_FRIENDSHIP_QUERY = "INSERT INTO friendships (user_id, friend_id, status) " +
             "VALUES (?, ?, 'PENDING')";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {

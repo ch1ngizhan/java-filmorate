@@ -119,7 +119,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Collection<Film> findAll() {
-        return findMany(FIND_ALL_QUERY);
+        return jdbc.query(FIND_ALL_QUERY, mapper);
 
     }
+
 }

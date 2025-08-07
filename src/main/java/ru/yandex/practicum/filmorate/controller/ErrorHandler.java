@@ -51,6 +51,7 @@ public class ErrorHandler {
     public ErrorResponse handleUserNotFound(final UserNotFoundException e) {
         return new ErrorResponse(e.getMessage());
     }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
