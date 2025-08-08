@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(@Valid @RequestBody User user) {
         log.info("Запрос на создание пользователя: {}", user);
         User createdUser = service.create(user);
         log.info("Пользователь создан: {}", createdUser);
@@ -57,7 +58,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
+    public User update(@Valid @RequestBody User newUser) {
         log.info("Запрос на обновление пользователя: {}", newUser);
         User updatedUser = service.update(newUser);
         log.info("Пользователь обновлен: {}", updatedUser);
