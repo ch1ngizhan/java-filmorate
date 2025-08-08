@@ -11,7 +11,9 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Repository
@@ -20,7 +22,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public static final String INSERT_FILM_GENRES_QUERY = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
     public static final String DELETE_FILM_GENRES_QUERY = "DELETE FROM film_genre WHERE film_id = ?";
     private static final String FIND_ALL_QUERY = "SELECT f.*, r.name AS rating_name FROM films f JOIN mpa_rating r ON f.mpa_rating_id = r.mpa_rating_id";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM films WHERE film_id = ?";
+    private static final String FIND_BY_ID_QUERY =
+            "SELECT f.*, r.name AS rating_name " +
+                    "FROM films f " +
+                    "JOIN mpa_rating r ON f.mpa_rating_id = r.mpa_rating_id " +
+                    "WHERE f.film_id = ?";
     private static final String INSERT_QUERY = "INSERT INTO films (name, description, release_date, duration, mpa_rating_id) " +
             "VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ? " +
@@ -36,6 +42,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "GROUP BY f.film_id " +
                     "ORDER BY likes_count DESC " +
                     "LIMIT ?";
+    private static final String GENRES_BY_FILM_ID_SQL = "SELECT g.genre_id, g.name FROM genres g JOIN film_genre fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ? ORDER BY g.genre_id";
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
@@ -99,7 +106,13 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     @Override
     public Optional<Film> getFilmById(Long id) {
-        return findOne(FIND_BY_ID_QUERY, id);
+        Film film = findOne(FIND_BY_ID_QUERY, id).orElse(null);
+        ;
+        if (film != null) {
+            film.setGenres(findGenresByFilmId(film.getId()));
+        }
+        assert film != null;
+        return Optional.of(film);
     }
 
     @Override
@@ -121,6 +134,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public Collection<Film> findAll() {
         return jdbc.query(FIND_ALL_QUERY, mapper);
 
+    }
+
+    private Set<Genre> findGenresByFilmId(Long filmId) {
+        return new LinkedHashSet<>(jdbc.query(GENRES_BY_FILM_ID_SQL,
+                (rs, rowNum) -> new Genre(rs.getInt("genre_id"), rs.getString("name")),
+                filmId));
     }
 
 }
