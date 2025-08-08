@@ -18,7 +18,7 @@ import java.util.Set;
 @Data
 @Builder
 public class Film {
-    final Set<Long> movieRating = new HashSet<>();
+
     Set<Genre> genres;
     @JsonProperty("mpa")
     MpaRating mpaRating;
