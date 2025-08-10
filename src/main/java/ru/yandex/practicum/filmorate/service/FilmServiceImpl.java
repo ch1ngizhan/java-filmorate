@@ -16,7 +16,9 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -30,7 +32,26 @@ public class FilmServiceImpl implements FilmService {
     public Collection<Film> findAll() {
         log.info("Запрос на получение всех фильмов");
         Collection<Film> films = filmStorage.findAll();
-        log.info("Возвращено {} фильмов", films.size());
+        log.info("Найдено {} фильмов", films.size());
+
+        if (films.isEmpty()) {
+            return films;
+        }
+
+
+        Set<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+
+
+        Map<Long, Set<Genre>> genresByFilmId = genreStorage.getGenresForFilms(filmIds);
+
+
+        films.forEach(film ->
+                film.setGenres(genresByFilmId.getOrDefault(film.getId(), Set.of()))
+        );
+
+        log.info("Фильмы обогащены жанрами");
         return films;
     }
 
@@ -118,10 +139,31 @@ public class FilmServiceImpl implements FilmService {
             throw new IllegalArgumentException(errorMessage);
         }
 
+        // Сначала достаем фильмы
         Collection<Film> films = filmStorage.getPopularFilms(count);
-        log.info("Возвращено {} популярных фильмов", films.size());
+        log.info("Найдено {} популярных фильмов", films.size());
+
+        if (films.isEmpty()) {
+            return films;
+        }
+
+
+        Set<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+
+
+        Map<Long, Set<Genre>> genresByFilmId = genreStorage.getGenresForFilms(filmIds);
+
+
+        films.forEach(film ->
+                film.setGenres(genresByFilmId.getOrDefault(film.getId(), Set.of()))
+        );
+
+        log.info("Популярные фильмы обогащены жанрами");
         return films;
     }
+
 
     private void validReleaseDate(Film film) {
         if (film.getReleaseDate() == null || !LocalDate.of(1895, 12, 28)

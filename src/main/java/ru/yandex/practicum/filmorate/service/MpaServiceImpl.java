@@ -17,12 +17,21 @@ public class MpaServiceImpl implements MpaService {
 
     @Override
     public MpaRating getMpaById(int id) {
-        return storage.findById(id)
-                .orElseThrow(() -> new NotFoundException("MPA с id=" + id + " не найден"));
+        log.info("Запрос MPA по ID: {}", id);
+        MpaRating mpa = storage.findById(id)
+                .orElseThrow(() -> {
+                    log.error("MPA с id={} не найден", id);
+                    return new NotFoundException("MPA с id=" + id + " не найден");
+                });
+        log.info("Найден MPA: {}", mpa);
+        return mpa;
     }
 
     @Override
     public Collection<MpaRating> getAllMpa() {
-        return storage.findAll();
+        log.info("Запрос на получение всех MPA");
+        Collection<MpaRating> mpaRatings = storage.findAll();
+        log.info("Найдено MPA рейтингов: {}", mpaRatings.size());
+        return mpaRatings;
     }
 }

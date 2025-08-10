@@ -17,12 +17,21 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public Genre getGenreById(int id) {
-        return storage.findById(id)
-                .orElseThrow(() -> new NotFoundException("Жанр с id=" + id + " не найден"));
+        log.info("Запрос жанра по ID: {}", id);
+        Genre genre = storage.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Жанр с id={} не найден", id);
+                    return new NotFoundException("Жанр с id=" + id + " не найден");
+                });
+        log.info("Найден жанр: {}", genre);
+        return genre;
     }
 
     @Override
     public Collection<Genre> getAllGenres() {
-        return storage.findAll();
+        log.info("Запрос на получение всех жанров");
+        Collection<Genre> genres = storage.findAll();
+        log.info("Найдено жанров: {}", genres.size());
+        return genres;
     }
 }
