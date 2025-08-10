@@ -6,12 +6,19 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -19,11 +26,32 @@ import java.util.Collection;
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
 
     public Collection<Film> findAll() {
         log.info("Запрос на получение всех фильмов");
         Collection<Film> films = filmStorage.findAll();
-        log.info("Возвращено {} фильмов", films.size());
+        log.info("Найдено {} фильмов", films.size());
+
+        if (films.isEmpty()) {
+            return films;
+        }
+
+
+        Set<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+
+
+        Map<Long, Set<Genre>> genresByFilmId = genreStorage.getGenresForFilms(filmIds);
+
+
+        films.forEach(film ->
+                film.setGenres(genresByFilmId.getOrDefault(film.getId(), Set.of()))
+        );
+
+        log.info("Фильмы обогащены жанрами");
         return films;
     }
 
@@ -35,7 +63,7 @@ public class FilmServiceImpl implements FilmService {
         validDescription(film);
         validDuration(film);
         validReleaseDate(film);
-
+        validateMpaAndGenre(film);
         Film createdFilm = filmStorage.create(film);
         log.info("Фильм успешно создан: {}", createdFilm);
         return createdFilm;
@@ -50,6 +78,7 @@ public class FilmServiceImpl implements FilmService {
         }
         Film existingFilm = findFilmOrThrow(newFilm.getId());
         log.debug("Найден фильм для обновления: {}", existingFilm);
+        validateMpaAndGenre(newFilm);
 
         if (newFilm.getDescription() != null) {
             validDescription(newFilm);
@@ -110,10 +139,31 @@ public class FilmServiceImpl implements FilmService {
             throw new IllegalArgumentException(errorMessage);
         }
 
+        // Сначала достаем фильмы
         Collection<Film> films = filmStorage.getPopularFilms(count);
-        log.info("Возвращено {} популярных фильмов", films.size());
+        log.info("Найдено {} популярных фильмов", films.size());
+
+        if (films.isEmpty()) {
+            return films;
+        }
+
+
+        Set<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+
+
+        Map<Long, Set<Genre>> genresByFilmId = genreStorage.getGenresForFilms(filmIds);
+
+
+        films.forEach(film ->
+                film.setGenres(genresByFilmId.getOrDefault(film.getId(), Set.of()))
+        );
+
+        log.info("Популярные фильмы обогащены жанрами");
         return films;
     }
+
 
     private void validReleaseDate(Film film) {
         if (film.getReleaseDate() == null || !LocalDate.of(1895, 12, 28)
@@ -165,5 +215,25 @@ public class FilmServiceImpl implements FilmService {
                     log.error(errorMessage);
                     return new NotFoundException(errorMessage);
                 });
+    }
+
+    private Film validateMpaAndGenre(Film film) {
+        MpaRating mpa = mpaStorage.findById(film.getMpaRating().getId())
+                .orElseThrow(() -> new NotFoundException("MPA с id=" + film.getMpaRating().getId() + " не найден"));
+        film.setMpaRating(mpa);
+
+        Set<Genre> genres = film.getGenres() == null
+                ? Set.of()
+                : film.getGenres();
+
+        genres.forEach(g ->
+                genreStorage.findById(g.getId())
+                        .orElseThrow(() ->
+                                new NotFoundException("Жанр с id=" + g.getId() + " не найден")
+                        )
+        );
+        film.setGenres(genres);
+
+        return film;
     }
 }
